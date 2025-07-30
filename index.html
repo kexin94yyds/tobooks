@@ -133,70 +133,65 @@
         }
 
         /* 搜索相关样式 */
-        #search-container {
-            display: none;
+        .search-container {
+            display: flex;
             align-items: center;
             gap: 8px;
-            margin: 0 16px;
+            position: relative;
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 8px;
+            padding: 8px 12px;
+            transition: all 0.2s;
+            min-width: 250px;
+        }
+
+        .search-container:hover {
+            background: rgba(0, 0, 0, 0.08);
+        }
+
+        .search-container:focus-within {
+            background: white;
+            box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.1);
+        }
+
+        .search-icon {
+            fill: #666;
+            flex-shrink: 0;
         }
 
         #search-input {
-            padding: 4px 8px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
+            border: none;
+            background: transparent;
             font-size: 14px;
-            width: 200px;
-        }
-
-        #search-input:focus {
+            flex: 1;
+            color: #333;
             outline: none;
-            border-color: #1976d2;
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
         }
 
-        .search-nav-btn {
-            padding: 4px 8px;
-            border: 1px solid #ccc;
-            background: white;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 12px;
-        }
-
-        .search-nav-btn:hover {
-            background: #f0f0f0;
-        }
-
-        .search-nav-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
+        #search-input::placeholder {
+            color: #999;
         }
 
         #search-info {
             font-size: 12px;
             color: #666;
-            min-width: 80px;
+            padding: 2px 6px;
+            background: rgba(25, 118, 210, 0.1);
+            border-radius: 3px;
+            min-width: 30px;
+            text-align: center;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.2s;
         }
 
-        .search-button {
-            padding: 6px 12px;
-            border: none;
-            background: none;
-            color: #333;
-            font-size: 14px;
-            cursor: pointer;
-            border-radius: 4px;
-            display: flex;
-            align-items: center;
-            gap: 4px;
+        .search-container:focus-within #search-info {
+            opacity: 1;
         }
 
-        .search-button:hover {
-            background: rgba(0, 0, 0, 0.05);
-        }
-
-        .search-button.active {
-            background: #1976d2;
-            color: white;
+        #search-info:empty {
+            opacity: 0;
         }
 
         /* 搜索高亮样式 */
@@ -221,19 +216,12 @@
             <input type="file" id="file-input" accept=".epub" />
         </div>
         
-        <button id="search-toggle" class="search-button">
-            <svg width="16" height="16" viewBox="0 0 24 24">
+        <div id="search-container" class="search-container">
+            <svg width="16" height="16" viewBox="0 0 24 24" class="search-icon">
                 <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
             </svg>
-            <span>搜索</span>
-        </button>
-        
-        <div id="search-container">
-            <input type="text" id="search-input" placeholder="输入关键词搜索..." />
-            <button id="search-prev" class="search-nav-btn">上一个</button>
-            <button id="search-next" class="search-nav-btn">下一个</button>
-            <span id="search-info">0/0</span>
-            <button id="search-close" class="search-nav-btn">关闭</button>
+            <input type="text" id="search-input" placeholder="搜索" />
+            <div id="search-info"></div>
         </div>
         
         <button id="backHomeBtn" style="background: #1976d2; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; padding: 6px 12px;">返回目录</button>
@@ -345,57 +333,21 @@
         // 搜索相关变量
         let searchResults = [];
         let currentSearchIndex = -1;
-        let isSearchOpen = false;
 
         // 搜索功能
-        const searchToggle = document.getElementById('search-toggle');
-        const searchContainer = document.getElementById('search-container');
         const searchInput = document.getElementById('search-input');
-        const searchPrev = document.getElementById('search-prev');
-        const searchNext = document.getElementById('search-next');
         const searchInfo = document.getElementById('search-info');
-        const searchClose = document.getElementById('search-close');
 
         // 快捷键监听 (Ctrl+F 或 Cmd+F)
         document.addEventListener('keydown', (e) => {
             if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
                 e.preventDefault(); // 阻止浏览器默认搜索
-                toggleSearch();
-            }
-            if (e.key === 'Escape' && isSearchOpen) {
-                closeSearch();
+                searchInput.focus();
+                searchInput.select();
             }
         });
 
-        // 切换搜索框显示
-        function toggleSearch() {
-            if (!book) {
-                alert('请先打开一本电子书');
-                return;
-            }
-            
-            if (isSearchOpen) {
-                closeSearch();
-            } else {
-                openSearch();
-            }
-        }
 
-        // 打开搜索框
-        function openSearch() {
-            isSearchOpen = true;
-            searchContainer.style.display = 'flex';
-            searchToggle.classList.add('active');
-            searchInput.focus();
-        }
-
-        // 关闭搜索框
-        function closeSearch() {
-            isSearchOpen = false;
-            searchContainer.style.display = 'none';
-            searchToggle.classList.remove('active');
-            clearSearchResults();
-        }
 
         // 执行搜索
         async function performSearch(query) {
@@ -722,23 +674,16 @@
         // 更新搜索信息显示
         function updateSearchInfo() {
             if (searchResults.length === 0) {
-                searchInfo.textContent = '0/0';
-                searchPrev.disabled = true;
-                searchNext.disabled = true;
+                searchInfo.textContent = '';
             } else {
                 searchInfo.textContent = `${currentSearchIndex + 1}/${searchResults.length}`;
-                searchPrev.disabled = currentSearchIndex <= 0;
-                searchNext.disabled = currentSearchIndex >= searchResults.length - 1;
             }
         }
 
         // 事件监听
-        searchToggle.addEventListener('click', toggleSearch);
-        searchClose.addEventListener('click', closeSearch);
-
         searchInput.addEventListener('input', (e) => {
             const query = e.target.value;
-            if (query.length >= 2) {
+            if (query.length >= 2 && book) {
                 performSearch(query);
             } else {
                 clearSearchResults();
@@ -758,18 +703,16 @@
                         goToSearchResult(currentSearchIndex + 1);
                     }
                 }
-            }
-        });
-
-        searchPrev.addEventListener('click', () => {
-            if (currentSearchIndex > 0) {
-                goToSearchResult(currentSearchIndex - 1);
-            }
-        });
-
-        searchNext.addEventListener('click', () => {
-            if (currentSearchIndex < searchResults.length - 1) {
-                goToSearchResult(currentSearchIndex + 1);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (currentSearchIndex > 0) {
+                    goToSearchResult(currentSearchIndex - 1);
+                }
+            } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                if (currentSearchIndex < searchResults.length - 1) {
+                    goToSearchResult(currentSearchIndex + 1);
+                }
             }
         });
 
@@ -785,3 +728,4 @@
     </script>
 </body>
 </html>
+
